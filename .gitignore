@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.DS_Store
+
+# uv
+.uv/
+
+# IDE
+.idea/
+.vscode/
+
+# Project outputs (keep projects/ dir but ignore generated content)
+projects/
+projects/*/images/
+projects/*/images_processed/
+projects/*/audio/
+projects/*/output/
+
+# Local config (contains real API keys — use config.template.yaml as reference)
+config.yaml

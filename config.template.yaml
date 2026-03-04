@@ -1,0 +1,50 @@
+# =============================================================================
+# Hang2La-skills — 全局配置模板
+# 使用方式：cp config.template.yaml config.yaml，然后填写 API Key
+# 所有配置项均可在各项目的 project.yaml 中单独覆盖
+# =============================================================================
+
+# ── API Keys ──────────────────────────────────────────────────────────────────
+# Pexels（搜图必填）：https://www.pexels.com/api/
+pexels_api_key: "YOUR_PEXELS_KEY"
+
+# Unsplash（可选备用图源）：https://unsplash.com/developers
+unsplash_access_key: "YOUR_UNSPLASH_KEY"
+
+# OpenAI（可选，仅 tts_provider: openai 时需要）
+openai_api_key: ""
+
+# ── TTS 配置 ───────────────────────────────────────────────────────────────────
+# 提供商：edge-tts（免费，无需 Key）或 openai
+tts_provider: edge-tts
+
+# 各语言默认音色（edge-tts）
+# 查看所有可用音色：python -m edge_tts --list-voices
+tts_voices:
+  zh: zh-CN-XiaoxiaoNeural    # 温柔女声，中文推荐
+  en: en-US-AriaNeural        # 对话女声，英文推荐
+
+# OpenAI TTS 配置（仅 tts_provider: openai 时生效）
+openai_tts_model: tts-1        # tts-1（快速）| tts-1-hd（高音质）
+openai_tts_voice: nova         # alloy | echo | fable | onyx | nova | shimmer
+
+# ── 视频配置 ───────────────────────────────────────────────────────────────────
+default_resolution: "1920x1080"
+default_fps: 24
+
+# Agent 自动规划时的默认片段数
+default_slides_count: 8
+
+# 幻灯片间淡入淡出时长（秒，设为 0 可关闭）
+transition_duration: 0.5
+
+# ── 内容默认值 ─────────────────────────────────────────────────────────────────
+default_language: zh           # zh | en
+default_style: documentary     # documentary | storytelling | educational
+
+# ── 图片搜索 ───────────────────────────────────────────────────────────────────
+# 每个片段搜索并下载的候选图片数量
+images_per_slide: 3
+
+# 图片方向偏好：landscape（横向）| portrait（纵向）| square（方形）
+image_orientation: landscape

@@ -1,0 +1,208 @@
+name: china-maps
+type: tierlist
+topic: 中国电子地图软件，从夯到拉排名
+language: zh
+resolution: 1920x1080
+fps: 24
+tts_voice: zh-CN-XiaoxiaoNeural
+tierlist:
+  background: /Users/earayu/Documents/GitHub/Hang2La-skills/.cursor/skills/assemble-video/assets/tierlist_bg.png
+  label_width_ratio: 0.127
+tiers:
+- id: hang
+  label: 夯
+- id: top
+  label: 顶级
+- id: rsr
+  label: 人上人
+- id: npc
+  label: NPC
+- id: la
+  label: 拉完了
+intro:
+  text: '中国电子地图软件，从"夯"到"拉"排名。
+
+    高德、百度、腾讯、苹果……谁是你手机里最靠谱的导航神器，谁又是害你迷路的"背锅侠"？
+
+    今天咱们来一次彻底的大盘点，没看过的朋友赶紧对照一下自己手机里装的是哪款。
+
+    '
+  audio: audio/intro.mp3
+  duration: 19.78
+contestants:
+- index: 1
+  name: 高德地图
+  keywords: AutoNavi Amap China navigation app logo
+  tier: hang
+  text: '首先登场的，是江湖地位无可撼动的高德地图。
+
+    这款地图可以说是中国导航软件里的绝对王者，路况更新速度快得离谱，实时拥堵识别精准到让你怀疑它在你车里装了摄像头。
+
+    高德最厉害的地方在于它的数据整合能力——它不仅是自己的App，背后还给饿了么、钉钉、支付宝等一大堆软件提供地图服务，属于那种"幕后大佬"级别的存在。
+
+    语音导航功能也是业界标杆，不仅有普通版，还有各种明星定制音色，开车听着林志玲叫你"亲爱的"，路途再堵也不烦躁。
+
+    步行导航、公交换乘、打车一键切换，界面简洁不臃肿，广告也比某家少多了。
+
+    更新频率也是一绝，哪条路新修了，哪里限速变了，高德往往第一时间就反映出来。
+
+    综合来看，高德地图就是中国导航软件的天花板，给个"夯"，毫无争议。
+
+    '
+  image: images/contestant_01/photo_00.jpg
+  audio: audio/contestant_01.mp3
+  duration: 63.53
+- index: 2
+  name: 百度地图
+  keywords: Baidu Maps China navigation app interface
+  tier: top
+  text: '接下来是百度地图，国内最早一批做电子地图的老玩家了。
+
+    说实话，百度地图的技术底子是相当扎实的，路网数据覆盖广，城市内导航基本不会出大问题，AR实景导航这个功能也是真的好用，在复杂路口直接在实景上画箭头，再也不用对着小地图一脸懵。
+
+    室内地图做得也不错，大型商场、机场的室内定位算是国内领先水平。
+
+    但是——这个"但是"非常重要——百度地图的广告真的有点太多了。
+
+    你打开地图，都不用找功能，广告先映入眼帘。各种推广信息、商业标注把地图塞得满满当当，有时候我甚至分不清哪个是真实路口哪个是广告入口。
+
+    而且这些年百度系的产品口碑整体走下坡路，地图更新的及时性和准确性上也开始被高德拉开差距。
+
+    技术实力在，但广告让人头疼，给个"顶级"，不亏但也到头了。
+
+    '
+  image: images/contestant_02/photo_00.jpg
+  audio: audio/contestant_02.mp3
+  duration: 66.29
+- index: 3
+  name: 腾讯地图
+  keywords: Tencent Maps QQ Maps China navigation app
+  tier: rsr
+  text: '腾讯地图，又叫QQ地图，鹅厂出品的这款导航软件……怎么说呢，活得有点憋屈。
+
+    论技术，腾讯不差，路网数据也算完整，微信小程序里的地图就是腾讯的，每天使用量也不少。
+
+    但腾讯地图作为独立App，就有点尴尬了——高德吃掉了大半市场，百度占着另一头，腾讯地图夹在中间两边不是人。
+
+    界面设计倒是清爽，广告相比百度节制不少，功能该有的基本也都有，正常通勤用完全没问题。
+
+    但街景地图、路况精准度、更新速度这些细节上，比高德还是差了那么一口气。
+
+    感觉腾讯地图的存在意义，更多是给微信生态配套服务用的，单打独斗竞争力就弱一些了。
+
+    中规中矩，给个"人上人"，用来用去也够用，就是没什么特别的记忆点。
+
+    '
+  image: images/contestant_03/photo_01.jpg
+  audio: audio/contestant_03.mp3
+  duration: 58.82
+- index: 4
+  name: 华为地图（Petal Maps）
+  keywords: Huawei Petal Maps navigation app logo
+  tier: npc
+  text: '华为地图，也叫花瓣地图，是华为在被制裁、谷歌服务受限之后自研推出的替代方案。
+
+    这款地图的故事是蛮励志的——被掐断了谷歌地图之后，华为硬是自己搞了一套出来，覆盖了全球多个国家和地区。
+
+    国内路网数据靠合作伙伴撑着，功能上基础导航、公交、步行都有，在华为手机上跑着也算流畅。
+
+    但问题也很明显：数据不够新，一些新开的道路和小区迟迟没有更新；细节体验上和高德百度还有一定差距；最关键的是，除了华为鸿蒙生态，基本没什么人主动去用它。
+
+    它的存在感就是：华为手机默认装着，你会打开用一下，然后还是去下高德。
+
+    没有大毛病，但存在感薄弱，给个"NPC"吧，就是个凑数的。
+
+    '
+  image: images/contestant_04/photo_00.jpg
+  audio: audio/contestant_04.mp3
+  duration: 56.28
+- index: 5
+  name: 苹果地图（Apple Maps）
+  keywords: Apple Maps China navigation iOS app
+  tier: la
+  text: '好了，来到拉胯区，第一个就是苹果地图，这个可以说是全球有名的"迷路神器"。
+
+    苹果地图刚上线的时候，那叫一个翻车现场——把桥导成了河，把机场导成了麦地，澳大利亚有个城市直接被扔到了沙漠里。
+
+    苹果花了好几年才把海外的坑基本填完，但在中国市场，苹果地图依然是重灾区。
+
+    首先坐标系就是个问题，中国特有的GCJ-02坐标系让不少应用出现偏移，苹果地图的处理时常不够精准。
+
+    路况信息更新慢，细节数据残缺，很多新路段根本没有，导航到一半直接指到墙上去的情况不是没发生过。
+
+    当然这两年确实有进步，但进步的速度远远跟不上中国路网建设的速度。
+
+    在中国用苹果地图导航，需要一颗强大的心脏，给个"拉完了"，问题真的挺多的。
+
+    '
+  image: images/contestant_05/photo_00.jpg
+  audio: audio/contestant_05.mp3
+  duration: 60.77
+- index: 6
+  name: 谷歌地图
+  keywords: Google Maps navigation app world map
+  tier: la
+  text: '谷歌地图，放在全球范围内那绝对是神级应用，但在中国，它基本等于不存在。
+
+    首先，挂梯子才能用，这就直接淘汰掉99%的普通用户了。
+
+    其次，就算你开了VPN打开了谷歌地图，中国区域的数据也是出了名的不准，因为中国强制要求使用GCJ-02坐标偏移，谷歌使用的是WGS-84坐标，两套坐标系不对，定位全都是歪的，误差可能有几百米。
+
+    你让谷歌地图帮你导航去某个小区，它可能把你导到隔壁工地。
+
+    而且谷歌在中国几乎没有地推团队去维护更新数据，很多地方的路网信息完全过时。
+
+    这玩意儿在国内就是个摆设，甚至是负效果，给"拉完了"，而且是实至名归的那种拉。
+
+    '
+  image: images/contestant_06/photo_00.jpg
+  audio: audio/contestant_06.mp3
+  duration: 56.35
+- index: 7
+  name: 导航犬
+  keywords: Daohangquan Navdog China GPS navigation app logo
+  tier: la
+  text: '导航犬，这是一个让很多老司机有情怀的名字。
+
+    曾经，它是不少货车司机和长途司机的心头好，界面简单粗暴，就为了一件事——导航。
+
+    但随着智能手机普及，高德百度强势崛起，导航犬就开始掉队了。
+
+    更新频率跟不上，数据越来越旧，很多新建道路和改建路段完全没有收录。
+
+    界面也停留在了上个时代的审美，用着用着就有种穿越回2012年的感觉。
+
+    语音提示的声音也是那种机械感十足的老派风格，再也回不到当年跟高德平起平坐的荣光了。
+
+    导航犬，给个"拉完了"。不是它不够努力，是时代变了，它没跟上。
+
+    '
+  image: images/contestant_07/photo_00.jpg
+  audio: audio/contestant_07.mp3
+  duration: 48.34
+- index: 8
+  name: 搜狗地图
+  keywords: Sogou Maps China navigation app interface
+  tier: la
+  text: '最后压轴出场的，是搜狗地图。
+
+    说实话，搜狗地图这个名字，现在很多年轻人可能都没听说过了，这就说明问题了。
+
+    搜狗地图最大的槽点不是功能差，而是已经差不多被彻底边缘化了。
+
+    数据老旧，界面将就，功能稀薄，这几年基本没有什么实质性的更新和迭代。
+
+    更致命的是，腾讯收购搜狗之后，搜狗旗下产品的命运就很微妙了，搜狗地图也不例外，感觉随时可能停更甚至关闭。
+
+    现在打开搜狗地图，就像走进一家快要倒闭的餐厅，食材还在，但你不太敢点。
+
+    给个"拉完了"，而且是那种让人有点惋惜的拉。
+
+    '
+  image: images/contestant_08/photo_00.jpg
+  audio: audio/contestant_08.mp3
+  duration: 47.04
+outro:
+  text: 你用哪款地图软件最多？你觉得排名合理吗？欢迎在评论区告诉我，我们下期视频再见。
+  audio: audio/outro.mp3
+  duration: 8.76
