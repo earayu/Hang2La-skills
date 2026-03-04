@@ -9,6 +9,8 @@ Video format:
       Phase 2 (placement):  0.6s animation — image shrinks and flies to its tier row
   - Outro segment: complete tier list + outro audio
 
+Uses ffmpeg subprocess directly for fast encoding and reliable audio output.
+
 Usage:
     python assemble_tierlist.py \\
       --project projects/myvideo/project.yaml \\
@@ -18,7 +20,10 @@ Usage:
 
 import argparse
 import json
+import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -119,25 +124,21 @@ class TierListLayout:
         self.thumbnail_size = self.tier_h - 2 * THUMBNAIL_PADDING
         self.thumbnail_stride = self.thumbnail_size + THUMBNAIL_GAP
 
-        # Track how many thumbnails have been placed in each tier
         self.tier_counts: dict[str, int] = {t["id"]: 0 for t in tiers}
 
     def tier_index(self, tier_id: str) -> int:
         return self.tier_ids.index(tier_id)
 
     def thumbnail_topleft(self, tier_id: str, position: int) -> tuple[int, int]:
-        """(x, y) top-left corner for thumbnail at `position` in the given tier."""
         row = self.tier_index(tier_id)
         x   = self.label_w + position * self.thumbnail_stride
         y   = row * self.tier_h + THUMBNAIL_PADDING
         return x, y
 
     def featured_topleft(self, feat_w: int, feat_h: int) -> tuple[int, int]:
-        """(x, y) to center an image of (feat_w × feat_h) on the video frame."""
         return (self.video_w - feat_w) // 2, (self.video_h - feat_h) // 2
 
     def allocate(self, tier_id: str) -> int:
-        """Reserve a position in the tier and return its index."""
         pos = self.tier_counts[tier_id]
         self.tier_counts[tier_id] += 1
         return pos
@@ -184,19 +185,16 @@ def make_placement_frames(
     to the small thumbnail position/size in the tier row.
     """
     src_w, src_h = src_img.size
-    sx0, sy0 = src_pos   # top-left of featured image (full size)
-    tx, ty   = dst_pos   # top-left of final thumbnail
+    sx0, sy0 = src_pos
+    tx, ty   = dst_pos
 
     frames = []
     for i in range(n_frames):
         t = smoothstep(i / max(1, n_frames - 1))
 
-        # Interpolate size (featured → thumbnail)
         cw = max(1, int(src_w + (dst_size - src_w) * t))
         ch = max(1, int(src_h + (dst_size - src_h) * t))
 
-        # Keep the image visually centered during shrink:
-        # start center = src center, end center = thumbnail center
         start_cx = sx0 + src_w // 2
         start_cy = sy0 + src_h // 2
         end_cx   = tx  + dst_size // 2
@@ -214,15 +212,118 @@ def make_placement_frames(
     return frames
 
 
+# ─── ffmpeg helpers ───────────────────────────────────────────────────────────
+
+def run_ffmpeg(args: list[str]) -> None:
+    """Run ffmpeg and raise RuntimeError on non-zero exit."""
+    result = subprocess.run(
+        ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"] + args,
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"ffmpeg error:\n{result.stderr[-800:]}")
+
+
+def make_static_clip(frame_array: np.ndarray, audio_path: Path, clip_path: Path, fps: int) -> None:
+    """
+    Create a video clip from a static frame + audio file.
+    Uses ffmpeg's -loop 1 which is extremely fast: no per-frame Python processing.
+    Audio is resampled to 44100 Hz stereo so all clips share the same audio params,
+    enabling lossless stream-copy during final concatenation.
+    """
+    frame_png = str(clip_path) + ".tmp_frame.png"
+    Image.fromarray(frame_array).save(frame_png)
+    try:
+        run_ffmpeg([
+            "-loop", "1",
+            "-framerate", str(fps),
+            "-i", frame_png,
+            "-i", str(audio_path),
+            "-c:v", "libx264", "-tune", "stillimage", "-preset", "fast",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k",
+            "-ar", "44100",   # standardize sample rate for concat compatibility
+            "-ac", "2",       # standardize to stereo
+            "-shortest",
+            "-movflags", "+faststart",
+            str(clip_path),
+        ])
+    finally:
+        try:
+            os.remove(frame_png)
+        except OSError:
+            pass
+
+
+def make_anim_clip(frames: list[np.ndarray], clip_path: Path, fps: int) -> None:
+    """
+    Create a short animation clip by piping raw RGB frames into ffmpeg.
+    Adds a silent audio track so it can be losslessly concatenated with audio clips.
+    """
+    h, w = frames[0].shape[:2]
+    duration = len(frames) / fps
+    frame_data = b"".join(f.tobytes() for f in frames)
+
+    proc = subprocess.Popen(
+        [
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            # video input: raw RGB via stdin
+            "-f", "rawvideo", "-vcodec", "rawvideo",
+            "-s", f"{w}x{h}", "-pix_fmt", "rgb24", "-r", str(fps),
+            "-i", "pipe:0",
+            # audio input: silent
+            "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+            "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k",
+            "-t", str(duration),
+            str(clip_path),
+        ],
+        stdin=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    _, stderr = proc.communicate(input=frame_data)
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg anim clip error:\n{stderr.decode()[-800:]}")
+
+
+def concat_clips(clip_paths: list[Path], output: Path) -> float:
+    """
+    Concatenate clips losslessly using ffmpeg concat demuxer.
+    Returns the total duration in seconds.
+    """
+    filelist = output.parent / "filelist.tmp.txt"
+    try:
+        with open(filelist, "w") as f:
+            for p in clip_paths:
+                f.write(f"file '{p}'\n")
+
+        run_ffmpeg([
+            "-f", "concat", "-safe", "0",
+            "-i", str(filelist),
+            "-c", "copy",
+            str(output),
+        ])
+    finally:
+        filelist.unlink(missing_ok=True)
+
+    # Probe duration
+    probe = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+         "-of", "csv=p=0", str(output)],
+        capture_output=True, text=True,
+    )
+    try:
+        return round(float(probe.stdout.strip()), 2)
+    except ValueError:
+        return 0.0
+
+
 # ─── Video assembly ───────────────────────────────────────────────────────────
 
 def build_video(project: dict, project_dir: Path, output: Path, fps: int) -> float:
-    from moviepy import AudioFileClip, ImageClip, VideoClip, concatenate_videoclips
-
-    # ── Parse project config ────────────────────────────────────────────────
     video_w, video_h = map(int, project["resolution"].split("x"))
-    tiers_config  = project.get("tiers", [])
-    tierlist_cfg  = project.get("tierlist", {})
+    tiers_config = project.get("tiers", [])
+    tierlist_cfg = project.get("tierlist", {})
 
     bg_path = resolve_path(project_dir, tierlist_cfg["background"])
     bg_img  = load_rgba(bg_path).resize((video_w, video_h), Image.LANCZOS)
@@ -231,86 +332,86 @@ def build_video(project: dict, project_dir: Path, output: Path, fps: int) -> flo
     layout  = TierListLayout(video_w, video_h, tiers_config, label_w)
 
     placed: list[PlacedThumb] = []
-    clips = []
 
-    # ── Intro ────────────────────────────────────────────────────────────────
-    intro = project.get("intro")
-    if intro and intro.get("audio"):
-        audio = AudioFileClip(str(resolve_path(project_dir, intro["audio"])))
-        base  = build_base(bg_img, placed)
-        frame = build_frame(base)
-        clips.append(ImageClip(frame).with_duration(audio.duration).with_audio(audio))
+    with tempfile.TemporaryDirectory() as _tmpdir:
+        tmpdir = Path(_tmpdir)
+        clip_paths: list[Path] = []
+        clip_idx = 0
 
-    # ── Contestants ──────────────────────────────────────────────────────────
-    for contestant in project.get("contestants", []):
-        img_path   = resolve_path(project_dir, contestant["image"])
-        audio_path = resolve_path(project_dir, contestant["audio"])
-        tier_id    = contestant["tier"]
+        def next_clip() -> Path:
+            nonlocal clip_idx
+            p = tmpdir / f"clip_{clip_idx:04d}.mp4"
+            clip_idx += 1
+            return p
 
-        raw         = load_rgba(img_path)
-        featured    = resize_contain(raw.copy(), FEATURED_MAX_SIZE, FEATURED_MAX_SIZE)
-        feat_w, feat_h = featured.size
-        feat_x, feat_y = layout.featured_topleft(feat_w, feat_h)
+        # ── Intro ────────────────────────────────────────────────────────────
+        intro = project.get("intro")
+        if intro and intro.get("audio"):
+            print("[assemble] Building intro...", file=sys.stderr)
+            base  = build_base(bg_img, placed)
+            frame = build_frame(base)
+            cp    = next_clip()
+            make_static_clip(frame, resolve_path(project_dir, intro["audio"]), cp, fps)
+            clip_paths.append(cp)
 
-        thumb_size  = layout.thumbnail_size
-        thumbnail   = center_crop_square(raw.copy(), thumb_size)
+        # ── Contestants ──────────────────────────────────────────────────────
+        for contestant in project.get("contestants", []):
+            name       = contestant.get("name", "?")
+            img_path   = resolve_path(project_dir, contestant["image"])
+            audio_path = resolve_path(project_dir, contestant["audio"])
+            tier_id    = contestant["tier"]
 
-        pos_in_tier = layout.allocate(tier_id)
-        thumb_x, thumb_y = layout.thumbnail_topleft(tier_id, pos_in_tier)
+            raw      = load_rgba(img_path)
+            featured = resize_contain(raw.copy(), FEATURED_MAX_SIZE, FEATURED_MAX_SIZE)
+            feat_w, feat_h = featured.size
+            feat_x, feat_y = layout.featured_topleft(feat_w, feat_h)
 
-        # Phase 1: commentary — static composite with featured image
-        audio = AudioFileClip(str(audio_path))
-        base  = build_base(bg_img, placed)
-        frame = build_frame(base, featured, feat_x, feat_y)
-        commentary_clip = (
-            ImageClip(frame)
-            .with_duration(audio.duration)
-            .with_audio(audio)
-        )
-        clips.append(commentary_clip)
+            thumb_size = layout.thumbnail_size
+            thumbnail  = center_crop_square(raw.copy(), thumb_size)
 
-        # Phase 2: placement animation — featured image flies to tier row
-        n_frames    = max(2, int(ANIMATION_DURATION * fps))
-        anim_base   = build_base(bg_img, placed)
-        anim_frames = make_placement_frames(
-            anim_base,
-            featured,
-            (feat_x, feat_y),
-            (thumb_x, thumb_y),
-            thumb_size,
-            n_frames,
-        )
+            pos_in_tier      = layout.allocate(tier_id)
+            thumb_x, thumb_y = layout.thumbnail_topleft(tier_id, pos_in_tier)
 
-        def _make_frame(t, frames=anim_frames, dur=ANIMATION_DURATION):
-            idx = min(int(t / dur * len(frames)), len(frames) - 1)
-            return frames[idx]
+            # Phase 1: commentary
+            print(f"[assemble] Commentary: {name}", file=sys.stderr)
+            base  = build_base(bg_img, placed)
+            frame = build_frame(base, featured, feat_x, feat_y)
+            cp    = next_clip()
+            make_static_clip(frame, audio_path, cp, fps)
+            clip_paths.append(cp)
 
-        anim_clip = VideoClip(_make_frame, duration=ANIMATION_DURATION)
-        clips.append(anim_clip)
+            # Phase 2: placement animation
+            print(f"[assemble] Animation:  {name}", file=sys.stderr)
+            n_frames    = max(2, int(ANIMATION_DURATION * fps))
+            anim_base   = build_base(bg_img, placed)
+            anim_frames = make_placement_frames(
+                anim_base, featured,
+                (feat_x, feat_y), (thumb_x, thumb_y),
+                thumb_size, n_frames,
+            )
+            cp = next_clip()
+            make_anim_clip(anim_frames, cp, fps)
+            clip_paths.append(cp)
 
-        # Register this thumbnail for all subsequent frames
-        placed.append((thumbnail, thumb_x, thumb_y))
+            placed.append((thumbnail, thumb_x, thumb_y))
 
-    # ── Outro ────────────────────────────────────────────────────────────────
-    outro = project.get("outro")
-    if outro and outro.get("audio"):
-        audio = AudioFileClip(str(resolve_path(project_dir, outro["audio"])))
-        base  = build_base(bg_img, placed)
-        frame = build_frame(base)
-        clips.append(ImageClip(frame).with_duration(audio.duration).with_audio(audio))
+        # ── Outro ────────────────────────────────────────────────────────────
+        outro = project.get("outro")
+        if outro and outro.get("audio"):
+            print("[assemble] Building outro...", file=sys.stderr)
+            base  = build_base(bg_img, placed)
+            frame = build_frame(base)
+            cp    = next_clip()
+            make_static_clip(frame, resolve_path(project_dir, outro["audio"]), cp, fps)
+            clip_paths.append(cp)
 
-    # ── Concatenate & export ─────────────────────────────────────────────────
-    if not clips:
-        raise ValueError("No clips generated — check that intro/contestants/outro have audio.")
+        if not clip_paths:
+            raise ValueError("No clips generated — check that intro/contestants/outro have audio.")
 
-    final = concatenate_videoclips(clips, method="compose")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    final.write_videofile(str(output), fps=fps, logger=None)
-
-    total = round(final.duration, 2)
-    for clip in clips:
-        clip.close()
-    final.close()
+        # ── Concatenate ───────────────────────────────────────────────────────
+        print(f"[assemble] Concatenating {len(clip_paths)} clips...", file=sys.stderr)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        total = concat_clips(clip_paths, output)
 
     return total
 
