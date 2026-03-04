@@ -159,29 +159,24 @@ def main():
     provider = args.provider or config.get("tts_provider", "edge-tts")
     output = Path(args.output)
 
+    # voice priority: --voice arg > config tts_voice
+    voice = args.voice or config.get("tts_voice") or None
+
     if provider == "openai":
         api_key = config.get("openai_api_key", "") or os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
             print("[tts] 未设置 openai_api_key，请在 config.yaml 或环境变量 OPENAI_API_KEY 中配置。", file=sys.stderr)
             sys.exit(1)
         model = config.get("openai_tts_model", "tts-1")
-        voice = args.voice or config.get("openai_tts_voice", "nova")
-        run_openai_tts(args.text, voice, model, api_key, output)
+        run_openai_tts(args.text, voice or "nova", model, api_key, output)
     elif provider == "fish":
         api_key = config.get("fish_api_key", "") or os.environ.get("FISH_API_KEY", "")
         if not api_key:
             print("[tts] 未设置 fish_api_key，请在 config.yaml 中添加 fish_api_key 或设置环境变量 FISH_API_KEY。", file=sys.stderr)
             sys.exit(1)
-        # voice is an optional reference_id for a specific Fish Audio voice model
-        voice = args.voice or config.get("fish_tts_voice", None)
         run_fish_tts(args.text, voice, api_key, output)
     else:
-        # 根据 config 中的默认语言选择音色
-        language = config.get("default_language", "zh")
-        voices_map = config.get("tts_voices", {})
-        default_voice = voices_map.get(language, "zh-CN-XiaoxiaoNeural")
-        voice = args.voice or default_voice
-        asyncio.run(run_edge_tts(args.text, voice, output))
+        asyncio.run(run_edge_tts(args.text, voice or "zh-CN-XiaoxiaoNeural", output))
 
     duration = get_audio_duration(str(output))
     print(json.dumps({"path": str(output), "duration_seconds": duration}, ensure_ascii=False), flush=True)

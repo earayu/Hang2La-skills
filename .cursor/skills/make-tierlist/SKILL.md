@@ -69,7 +69,8 @@ topic: "{话题}，从夯到拉排名"
 language: zh
 resolution: "1920x1080"
 fps: 24
-tts_voice: zh-CN-XiaoxiaoNeural
+# tts_voice 留空即可继承 config.yaml 中的 tts_provider / tts_voices 配置
+# 仅当需要覆盖音色时才填写，例如：tts_voice: zh-CN-YunxiNeural
 
 tierlist:
   background: ".cursor/skills/assemble-video/assets/tierlist_bg.png"
@@ -179,13 +180,21 @@ audio + duration 字段均存在？
   ❌ 任一缺失 → 用 text 字段跑 TTS → 填写 audio 和 duration
 ```
 
+**音色优先级**（高 → 低）：片段级 `tts_voice` → 项目级 `tts_voice` → `config.yaml` 中的 `tts_voices[language]`。
+通常只需传 `--config`，provider 和音色均由 config.yaml 决定，**不要额外加 `--voice` 或 `--provider` 参数**。
+
 ```bash
 python .cursor/skills/generate-tts/scripts/tts.py \
   --text "{text}" \
   --output "projects/{name}/audio/{segment}.mp3" \
-  --voice "{tts_voice}" \
   --config config.yaml
 ```
+
+> 若文案含换行（多行 YAML block scalar），请将文本写入临时文件再传入，避免 shell 截断：
+> ```bash
+> echo '{text}' > /tmp/seg.txt
+> python .cursor/skills/generate-tts/scripts/tts.py --text "$(cat /tmp/seg.txt)" --output ... --config config.yaml
+> ```
 
 对 `intro`、每位 `contestant`、`outro` 分别执行，更新 `project.yaml`。
 

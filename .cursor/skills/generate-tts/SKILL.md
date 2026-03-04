@@ -35,31 +35,30 @@ python .cursor/skills/generate-tts/scripts/tts.py \
 对每个缺少 `audio` 字段的片段：
 
 1. 确认片段有 `text` 字段，没有则先生成文案。
-2. 确定音色：片段级 `tts_voice` → 项目级 `tts_voice` → config 中 `tts_voices[language]`。
+2. 确定音色：`--voice` 参数 → config 中 `tts_voice`。通常只传 `--config`，音色由 config 统一管理。
 3. 执行脚本，保存到 `projects/{name}/audio/slide_{index:02d}.mp3`。
 4. 更新 `project.yaml`：将返回的路径写入 `audio`，将 `duration_seconds` 写入 `duration`。
 
 ## 音色选择
 
 **edge-tts（免费，默认）：**
-- 中文：`zh-CN-XiaoxiaoNeural`（默认，温柔女声）、`zh-CN-YunxiNeural`（男声）、`zh-CN-YunyangNeural`（播音男声）
-- 英文：`en-US-AriaNeural`（默认）、`en-US-GuyNeural`、`en-GB-SoniaNeural`
+- 中文：`zh-CN-XiaoxiaoNeural`（温柔女声）、`zh-CN-YunxiNeural`（男声）、`zh-CN-YunyangNeural`（播音男声）
+- 英文：`en-US-AriaNeural`、`en-US-GuyNeural`、`en-GB-SoniaNeural`
 
 **OpenAI TTS：**
 - 音色：`alloy`、`echo`、`fable`、`onyx`、`nova`、`shimmer`
 - 使用前需在 `config.yaml` 中设置 `openai_api_key`。
 
 **Fish Audio TTS：**
-- `--voice` 传入 Fish Audio 的 `reference_id`（声音模型 ID，可在 [fish.audio](https://fish.audio) 平台找到）
-- 不传 `--voice` 则使用平台默认声音（S1 模型）
+- `tts_voice` 填写 Fish Audio 的 `reference_id`（在 [fish.audio](https://fish.audio) 平台声音模型页面 URL 中获取）
+- 不填则使用平台默认声音（S1 模型）
 - 使用前需在 `config.yaml` 中设置 `fish_api_key`，或设置环境变量 `FISH_API_KEY`
-- `config.yaml` 中可用 `fish_tts_voice` 设置项目级默认 reference_id
 
 **config.yaml 示例：**
 ```yaml
 tts_provider: fish           # 默认 provider（edge-tts / openai / fish）
 fish_api_key: "your_key"     # Fish Audio API Key
-fish_tts_voice: "8ef4a238714b45718ce04243307c57a7"  # 可选，voice reference_id
+tts_voice: "2d25cc5dfbdc45cb996d2b200a6b72a1"  # 音色（edge-tts 填音色名，Fish Audio 填 reference_id）
 ```
 
 ## 文案长度说明
