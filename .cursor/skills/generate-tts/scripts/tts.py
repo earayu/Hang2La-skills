@@ -1,5 +1,5 @@
 """
-tts.py — 使用 edge-tts 或 OpenAI TTS 将文本转换为语音。
+tts.py — 使用 edge-tts、OpenAI TTS 或 Fish Audio TTS 将文本转换为语音。
 
 用法：
     python tts.py --text "你好，世界" --output projects/myvideo/audio/slide_01.mp3
@@ -96,12 +96,62 @@ def concatenate_mp3(files: list[Path], output: Path) -> None:
     combined.close()
 
 
+def _find_http_proxy() -> str | None:
+    """Detect a local HTTP proxy port from env vars or common MonoCloud/Clash ports."""
+    for var in ("https_proxy", "http_proxy", "HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY"):
+        val = os.environ.get(var, "")
+        if val and not val.startswith("socks"):
+            return val
+    # Fall back to scanning well-known local proxy ports
+    import socket
+    for port in (8118, 7890, 8080, 1087, 10809):
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.5):
+                return f"http://127.0.0.1:{port}"
+        except OSError:
+            pass
+    return None
+
+
+def run_fish_tts(text: str, voice: str | None, api_key: str, output: Path) -> None:
+    """Call Fish Audio TTS API via curl subprocess (avoids Python proxy CONNECT issues)."""
+    import json as _json
+    import subprocess
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    payload: dict = {"text": text, "format": "mp3"}
+    if voice:
+        payload["reference_id"] = voice
+
+    cmd = [
+        "curl", "-s", "-X", "POST", "https://api.fish.audio/v1/tts",
+        "-H", f"Authorization: Bearer {api_key}",
+        "-H", "Content-Type: application/json",
+        "-H", "model: s1",
+        "-d", _json.dumps(payload, ensure_ascii=False),
+        "-o", str(output),
+        "-w", "%{http_code}",
+        "--max-time", "120",
+    ]
+    proxy = _find_http_proxy()
+    if proxy:
+        cmd += ["-x", proxy]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    http_code = result.stdout.strip()
+    if http_code != "200":
+        stderr_hint = result.stderr.strip()
+        raise RuntimeError(
+            f"Fish Audio API error HTTP {http_code}. stderr: {stderr_hint}"
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description="文本转语音合成。")
     parser.add_argument("--text", required=True, help="待合成的旁白文案")
     parser.add_argument("--output", required=True, help="输出 MP3 路径")
     parser.add_argument("--voice", default=None, help="TTS 音色名称")
-    parser.add_argument("--provider", default=None, choices=["edge-tts", "openai"])
+    parser.add_argument("--provider", default=None, choices=["edge-tts", "openai", "fish"])
     parser.add_argument("--config", default="config.yaml", help="config.yaml 路径")
     args = parser.parse_args()
 
@@ -117,6 +167,14 @@ def main():
         model = config.get("openai_tts_model", "tts-1")
         voice = args.voice or config.get("openai_tts_voice", "nova")
         run_openai_tts(args.text, voice, model, api_key, output)
+    elif provider == "fish":
+        api_key = config.get("fish_api_key", "") or os.environ.get("FISH_API_KEY", "")
+        if not api_key:
+            print("[tts] 未设置 fish_api_key，请在 config.yaml 中添加 fish_api_key 或设置环境变量 FISH_API_KEY。", file=sys.stderr)
+            sys.exit(1)
+        # voice is an optional reference_id for a specific Fish Audio voice model
+        voice = args.voice or config.get("fish_tts_voice", None)
+        run_fish_tts(args.text, voice, api_key, output)
     else:
         # 根据 config 中的默认语言选择音色
         language = config.get("default_language", "zh")
