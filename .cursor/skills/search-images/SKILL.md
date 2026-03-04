@@ -1,51 +1,53 @@
 ---
 name: search-images
-description: 使用 Pexels 和 Unsplash API 搜索并下载视频幻灯片所需的图片素材。当视频项目缺少图片、某个片段没有 image 字段、或用户要求根据关键词搜图时使用。
+description: 使用 DuckDuckGo 搜索并下载视频幻灯片所需的图片素材（无需 API Key）。当视频项目缺少 image 字段、某个片段没有图片、或用户要求根据关键词搜图时使用。
 ---
 
 # search-images
 
-根据关键词从 Pexels（主要）和 Unsplash（备用）下载图片。
+根据关键词从 DuckDuckGo 搜索并下载图片。DuckDuckGo 对**中文关键词**效果极佳，能直接找到相关的动漫截图、人物配图等。若 DuckDuckGo 触发限速，自动降级到 Bing 抓取。无需任何 API Key。
 
 ## 脚本用法
 
 ```bash
 python .cursor/skills/search-images/scripts/search_images.py \
-  --keywords "关键词" \
-  --output 输出目录路径 \
-  [--count 3] \
-  [--orientation landscape] \
+  --keywords "凡人修仙传 银月" \
+  --output projects/myvideo/images/contestant_02/ \
+  [--count 5] \
   [--config config.yaml]
 ```
 
 **参数说明：**
-- `--keywords` — 以空格分隔的搜索词（如 `"故宫 宫殿 历史"`）
+- `--keywords` — 搜索关键词，**优先使用中文**（如 `"凡人修仙传 银月"`、`"灌篮高手 流川枫"`）
 - `--output` — 图片保存目录（不存在时自动创建）
-- `--count` — 下载数量（默认取 config 中的 `images_per_slide`，通常为 3）
-- `--orientation` — `landscape`（横向）| `portrait`（纵向）| `square`（方形），默认 landscape
+- `--count` — 下载数量（默认取 config 中的 `images_per_slide`，通常为 5）
 - `--config` — `config.yaml` 路径（默认：当前目录下的 `config.yaml`）
 
 **标准输出（JSON）：**
 ```json
 {
   "images": [
-    {"path": "projects/myvideo/images/slide_01_0.jpg", "source": "pexels", "url": "..."},
-    {"path": "projects/myvideo/images/slide_01_1.jpg", "source": "pexels", "url": "..."}
+    {"path": "projects/myvideo/images/contestant_02/photo_00.jpg", "source": "duckduckgo", "url": "...", "title": "凡人修仙传 银月 角色介绍"},
+    {"path": "projects/myvideo/images/contestant_02/photo_01.jpg", "source": "duckduckgo", "url": "...", "title": "..."},
+    {"path": "projects/myvideo/images/contestant_02/photo_02.jpg", "source": "duckduckgo", "url": "...", "title": "..."}
   ]
 }
 ```
+
+每张图片包含 `title` 字段（来自 DuckDuckGo 的页面标题），供 agent 判断图片内容。
 
 ## 工作流
 
 对每个缺少 `image` 字段的片段：
 
-1. 使用片段的 `keywords` 字段。若也没有 keywords，则根据 `text` 和项目 `topic` 生成 2-4 个关键词。
-2. 为每个片段执行脚本，保存到 `projects/{name}/images/slide_{index:02d}/`。
-3. 取返回结果中的第一张图片作为该片段的图片（若下载了多张且质量重要，可询问用户）。
-4. 更新 `project.yaml` 中对应片段的 `image` 路径。
+1. 使用片段的 `keywords` 字段。若也没有 keywords，则根据 `text` 和项目 `topic` 生成 2-4 个**中文**关键词。
+2. 执行脚本，保存到 `projects/{name}/images/contestant_{index:02d}/`，下载 3-5 张候选图。
+3. **agent 根据 `title` 和 `url` 选择最相关的图片**（通常 DuckDuckGo 默认排在最前的最佳，但 title 明显不符时应选其他）。
+4. 更新 `project.yaml` 中对应片段的 `image` 路径（填入选中的图片路径）。
 
 ## 关键词技巧
 
-- 使用 2-4 个具体名词，避免动词和虚词。
-- 组合「主体 + 场景 + 风格」：`"故宫 宫殿 传统建筑"`、`"日落 山脉 风景"`。
-- 抽象话题用具体视觉形象替代：不用 `"繁荣"`，改用 `"城市 夜景 灯光"`。
+- **中文关键词效果远好于英文**：搜索 `"凡人修仙传 银月"` 直接返回动漫截图；`"silver wolf spirit Chinese mythology"` 只能返回泛图。
+- 格式：`"{作品名} {角色名}"` 或 `"{作品名} {场景/事件}"`。
+- 对于非动漫话题，也可用中文描述视觉内容：`"NBA 詹姆斯 扣篮"`、`"深圳 城市夜景"`。
+- 避免用 webp 图（脚本已自动过滤）。
