@@ -127,11 +127,11 @@ def run_fish_tts(text: str, voice: str | None, api_key: str, output: Path) -> No
         "curl", "-s", "-X", "POST", "https://api.fish.audio/v1/tts",
         "-H", f"Authorization: Bearer {api_key}",
         "-H", "Content-Type: application/json",
-        "-H", "model: s1",
+        "-H", "model: s2-pro",
         "-d", _json.dumps(payload, ensure_ascii=False),
         "-o", str(output),
         "-w", "%{http_code}",
-        "--max-time", "120",
+        "--max-time", "180",
     ]
     proxy = _find_http_proxy()
     if proxy:
