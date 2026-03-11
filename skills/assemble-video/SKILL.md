@@ -41,3 +41,15 @@ python skills/assemble-video/scripts/assemble_tierlist.py \
 ## 资产
 
 排行榜背景图（五档）：`skills/assemble-video/assets/tierlist_bg.png`
+
+## 常见错误与修复
+
+| 错误信息 | 原因 | 修复方法 |
+|---------|------|---------|
+| `ffmpeg not found` / `FileNotFoundError: ffmpeg` | 系统未安装 ffmpeg | macOS: `brew install ffmpeg`；Ubuntu: `sudo apt install ffmpeg` |
+| `ModuleNotFoundError: No module named 'moviepy'` | Python 依赖未安装 | 在项目根目录执行 `uv sync`（或 `pip install moviepy pillow numpy`） |
+| `FileNotFoundError: [image path]` | project.yaml 中的图片路径不存在 | 确认 `image` 字段路径正确，或先运行 search-images 补全 |
+| `FileNotFoundError: [audio path]` | project.yaml 中的音频路径不存在 | 确认 `audio` 字段路径正确，或先运行 generate-tts 补全 |
+| `PIL.UnidentifiedImageError` | 图片文件损坏或格式不支持 | 删除该图片，重新运行 search-images 下载 |
+| 视频合成卡住不动 | 某段音频时长为 0 或 duration 字段错误 | 检查 project.yaml 中所有 `duration` 字段，值应大于 0 |
+| 输出视频无声音 | ffmpeg 版本过旧 | 升级 ffmpeg：`brew upgrade ffmpeg` |

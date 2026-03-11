@@ -51,3 +51,13 @@ python skills/search-images/scripts/search_images.py \
 - 格式：`"{作品名} {角色名}"` 或 `"{作品名} {场景/事件}"`。
 - 对于非动漫话题，也可用中文描述视觉内容：`"NBA 詹姆斯 扣篮"`、`"深圳 城市夜景"`。
 - 避免用 webp 图（脚本已自动过滤）。
+
+## 常见错误与修复
+
+| 错误信息 | 原因 | 修复方法 |
+|---------|------|---------|
+| `ModuleNotFoundError: No module named 'requests'` | Python 依赖未安装 | 在项目根目录执行 `uv sync`（或 `pip install requests`） |
+| `Ratelimited by DuckDuckGo, falling back to Bing` | DuckDuckGo 触发限速 | 脚本会自动降级到 Bing，无需手动干预 |
+| `All sources failed` / 下载 0 张图 | 两个图源均被限速或关键词太冷僻 | 等待 30 秒后重试；或换一组关键词；或手动将图片放入 `materials/contestant_XX/` 目录 |
+| 下载的图片全是错误的内容 | 关键词不够具体 | 加入更多限定词，如作品名、角色全名、场景描述 |
+| `SSLError` / 证书错误 | 网络环境问题 | 检查是否使用了代理，或尝试更换网络 |
