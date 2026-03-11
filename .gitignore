@@ -19,5 +19,8 @@ projects/*/images_processed/
 projects/*/audio/
 projects/*/output/
 
+# Example search cache files
+examples/*/materials/*/search_results.json
+
 # Local config (contains real API keys — use config.template.yaml as reference)
 config.yaml
