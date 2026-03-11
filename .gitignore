@@ -3,7 +3,10 @@ __pycache__/
 *.py[cod]
 *.pyo
 .venv/
+
+# macOS
 .DS_Store
+**/.DS_Store
 
 # uv
 .uv/

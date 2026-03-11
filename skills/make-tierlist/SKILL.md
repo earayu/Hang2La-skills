@@ -73,7 +73,7 @@ fps: 24
 # 仅当需要覆盖音色时才填写，例如：tts_voice: zh-CN-YunxiNeural
 
 tierlist:
-  background: ".cursor/skills/assemble-video/assets/tierlist_bg.png"
+  background: "skills/assemble-video/assets/tierlist_bg.png"
   label_width_ratio: 0.127   # 标签列占视频宽度比例，无需修改
 
 tiers:
@@ -157,7 +157,7 @@ image 字段存在？
 搜图命令（仅在素材目录无图时使用）：
 
 ```bash
-python .cursor/skills/search-images/scripts/search_images.py \
+python skills/search-images/scripts/search_images.py \
   --keywords "{contestant.keywords}" \
   --output "projects/{name}/materials/contestant_{index:02d}/" \
   --count 5 \
@@ -184,7 +184,7 @@ audio + duration 字段均存在？
 通常只需传 `--config`，provider 和音色均由 config.yaml 决定，**不要额外加 `--voice` 或 `--provider` 参数**。
 
 ```bash
-python .cursor/skills/generate-tts/scripts/tts.py \
+python skills/generate-tts/scripts/tts.py \
   --text "{text}" \
   --output "projects/{name}/audio/{segment}.mp3" \
   --config config.yaml
@@ -193,7 +193,7 @@ python .cursor/skills/generate-tts/scripts/tts.py \
 > 若文案含换行（多行 YAML block scalar），请将文本写入临时文件再传入，避免 shell 截断：
 > ```bash
 > echo '{text}' > /tmp/seg.txt
-> python .cursor/skills/generate-tts/scripts/tts.py --text "$(cat /tmp/seg.txt)" --output ... --config config.yaml
+> python skills/generate-tts/scripts/tts.py --text "$(cat /tmp/seg.txt)" --output ... --config config.yaml
 > ```
 
 对 `intro`、每位 `contestant`、`outro` 分别执行，更新 `project.yaml`。
@@ -205,7 +205,7 @@ python .cursor/skills/generate-tts/scripts/tts.py \
 所有 `image`、`audio`、`duration` 就绪后：
 
 ```bash
-python .cursor/skills/assemble-video/scripts/assemble_tierlist.py \
+python skills/assemble-video/scripts/assemble_tierlist.py \
   --project "projects/{name}/project.yaml" \
   --output  "projects/{name}/output/{name}.mp4" \
   --config  config.yaml

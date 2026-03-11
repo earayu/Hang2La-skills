@@ -10,7 +10,7 @@ description: 读取 project.yaml，将排行榜图片和音频合成为最终 MP
 ## 脚本用法
 
 ```bash
-python .cursor/skills/assemble-video/scripts/assemble_tierlist.py \
+python skills/assemble-video/scripts/assemble_tierlist.py \
   --project projects/myvideo/project.yaml \
   --output  projects/myvideo/output/video.mp4 \
   [--config config.yaml]
@@ -40,4 +40,4 @@ python .cursor/skills/assemble-video/scripts/assemble_tierlist.py \
 
 ## 资产
 
-排行榜背景图（五档）：`.cursor/skills/assemble-video/assets/tierlist_bg.png`
+排行榜背景图（五档）：`skills/assemble-video/assets/tierlist_bg.png`
