@@ -8,9 +8,10 @@ __pycache__/
 # uv
 .uv/
 
-# IDE
+# IDE and editor-specific config
 .idea/
 .vscode/
+.cursor/
 
 # Project outputs (keep projects/ dir but ignore generated content)
 projects/

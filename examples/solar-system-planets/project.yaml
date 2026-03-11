@@ -7,7 +7,7 @@ fps: 24
 
 tierlist:
   # Path is relative to the repo root (resolved by assemble-video skill)
-  background: ".cursor/skills/assemble-video/assets/tierlist_bg.png"
+  background: "skills/assemble-video/assets/tierlist_bg.png"
   label_width_ratio: 0.127
 
 tiers:
